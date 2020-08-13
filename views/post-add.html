@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Add new post &laquo; Admin</title>
+  <link rel="stylesheet" href="/public/vendors/bootstrap/css/bootstrap.css">
+  <link rel="stylesheet" href="/public/vendors/font-awesome/css/font-awesome.css">
+  <link rel="stylesheet" href="/public/vendors/nprogress/nprogress.css">
+  <link rel="stylesheet" href="/public/css/admin.css">
+  <link rel="stylesheet" href="/public/layui/css/modules/laydate/default/laydate.css">
+  <link rel="stylesheet" href="/public/layui/css/modules/layer/default/layer.css">
+  <script src="/public/vendors/nprogress/nprogress.js"></script>
+</head>
+<body>
+  <script>NProgress.start()</script>
+
+  <div class="main">
+    {{include './navbar.html'}}
+    <div class="container-fluid">
+      <div class="page-title">
+        <h1>写文章</h1>
+      </div>
+      <!-- 有错误信息时展示 -->
+      <!-- <div class="alert alert-danger">
+        <strong>错误！</strong>发生XXX错误
+      </div> -->
+      <form class="row" onsubmit="return false" id = "addPostForm">
+        <div class="col-md-9">
+          <div class="form-group">
+            <label for="title">标题</label>
+            <input id="title" class="form-control input-lg" name="title" type="text" placeholder="文章标题">
+          </div>
+          <div class="form-group">
+            <label for="content">标题</label>
+            <textarea id="content" class="form-control input-lg" name="content" cols="30" rows="10" placeholder="内容"></textarea>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="feature">特色图像</label>
+            <!-- show when image chose -->
+            <img class="help-block thumbnail" style="display: none">
+            <input id="feature" class="form-control" type="file">
+            <!-- 保存上传文件的路径 -->
+            <input type="hidden" name = 'feature' value="">
+          </div>
+          <div class="form-group">
+            <label for="category">所属分类</label>
+            <select id="category" class="form-control" name="category">
+              {{each caregoryData obj key}}
+              <option value="{{obj.cat_id}}">{{obj.cat_name}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="created">发布时间</label>
+            <input id="created" class="form-control" name="created" type="text">
+          </div>
+          <div class="form-group">
+            <label for="status">状态</label>
+            <select id="status" class="form-control" name="status">
+              {{each postStatus obj key}}
+              <option value="{{obj.key}}">{{obj.text}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div class="form-group">
+            <button class="btn btn-primary" type="submit" id = "add">保存</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  {{include './aside.html'}}
+
+  <script src="/public/vendors/jquery/jquery.js"></script>
+  <script src="/public/vendors/bootstrap/js/bootstrap.js"></script>
+  <script src="/public/vendors/moment/moment.js"></script>
+  <script src="/public/layui/lay/modules/laydate.js"></script>
+  <script src="/public/layui/lay/modules/layer.js"></script>
+  <script>NProgress.done()</script>
+</body>
+<script>
+    $(function(){
+      //渲染时间日期
+      laydate.render({
+            elem: '#created',
+            type:'datetime'
+      });
+        $("#feature").change(function(){
+          //如果当前文件路径找不到，不再执行下边的操作
+          if(this.files.length == 0){
+              return;
+          }
+          //获取当前的文件的二进制数据
+          let file = this.files[0];
+          let formData = new FormData();
+
+          //将文件的二进制数据保存进formData对象中
+          formData.append('feature',file);
+
+          //发送ajax请求获取文件的路径
+          $.ajax({
+              url:'/getFilePath',
+              type:'post',
+              data:formData,
+              processData: false, // 将数据转换成对象，不对数据做处理，故 processData: false 
+              contentType: false,   
+          }).then(res => {
+              $(".thumbnail").attr('src','/'+res.filePath).show();
+              $("input[name=feature]").val(res.filePath);
+          })
+        })
+
+
+        //传送表单数据信息      
+        $("#add").on('click',function(){
+          let addPostMessage = $("#addPostForm").serialize();
+    
+          $.ajax({
+              url:'/addPosts',
+              type:'post',
+              data:addPostMessage,
+              dataType:'json',
+              success: function(data){
+                //添加成功后跳转主页
+                if(data.code == 200){
+                    layer.msg(data.message,{icon:1});
+                    location.href = "/posts";
+                }
+              }
+          })     
+        })  
+    })
+</script>
+</html>

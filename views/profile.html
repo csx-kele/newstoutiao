@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard &laquo; Admin</title>
+  <link rel="stylesheet" href="/public/vendors/bootstrap/css/bootstrap.css">
+  <link rel="stylesheet" href="/public/vendors/font-awesome/css/font-awesome.css">
+  <link rel="stylesheet" href="/public/vendors/nprogress/nprogress.css">
+  <link rel="stylesheet" href="/public/css/admin.css">
+  <script src="/public/vendors/nprogress/nprogress.js"></script>
+</head>
+<body>
+  <script>NProgress.start()</script>
+
+  <div class="main">
+    {{ include "./navbar.html" }}
+    <div class="container-fluid">
+      <div class="page-title">
+        <h1>我的个人资料</h1>
+      </div>
+      <!-- 有错误信息时展示 -->
+      <!-- <div class="alert alert-danger">
+        <strong>错误！</strong>发生XXX错误
+      </div> -->
+      <form class="form-horizontal" id = "userFormInfo" onsubmit="return false">
+        <div class="form-group">
+          <label class="col-sm-3 control-label">头像</label>
+          <div class="col-sm-6">
+            <label class="form-image">
+              <input id="avatar" type="file">
+              <!-- 给用户设置默认头像 -->
+              <img src="{{userData.photo}}" id = "userImg">
+              <i class="mask fa fa-upload"></i>
+              <!-- 保存修改后的文件路径 -->
+              <input type="text" name = "photo" value = ''>
+             
+              <input type="text" name = "oldPhoto" value="{{userData.photo}}">
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="email" class="col-sm-3 control-label">邮箱</label>
+          <div class="col-sm-6">
+            <input id="email" class="form-control" name="email" type="type" value="{{userData.email}}" placeholder="邮箱" readonly>
+            <p class="help-block">登录邮箱不允许修改</p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="nickname" class="col-sm-3 control-label">昵称</label>
+          <div class="col-sm-6">
+            <input id="nickname" class="form-control" name="nickname" type="type" value="{{userData.nickname}}" placeholder="昵称">
+            <p class="help-block">限制在 2-16 个字符</p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="bio" class="col-sm-3 control-label">简介</label>
+          <div class="col-sm-6">
+            <textarea id="bio" class="form-control" placeholder="Bio" cols="30" rows="6" name = "intro">{{userData.intro}}</textarea>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="col-sm-offset-3 col-sm-6">
+            <button type="submit" class="btn btn-primary" id = "updUserInfo">更新</button>
+            <a class="btn btn-link" href="/pwdReset">修改密码</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  {{include './aside.html'}}
+
+
+  <script src="/public/vendors/jquery/jquery.js"></script>
+  <script src="/public/vendors/bootstrap/js/bootstrap.js"></script>
+  <script src = "/public/js/jquery.twbsPagination.js"></script>
+  <script src="/public/vendors/moment/moment.js"></script>
+  <script src="/public/layui/lay/modules/layer.js"></script>
+  <script>NProgress.done()</script>
+</body>
+<script>
+    $(function(){
+        //用户上传头像
+        $("#avatar").change(function(){
+            console.log(this.files);
+            //如果当前上传文件的长度为0
+            if(this.files.length == 0){
+                return;
+            }
+
+            //获取当前上传文件的二进制数据
+            let photo = this.files[0];
+            let formData = new FormData();
+            //将路径保存到formData对象中
+            formData.append('feature',photo);
+
+            $.ajax({
+              url:'/getFilePath',
+              type:'post',
+              data:formData,
+              processData: false,
+              contentType: false,
+              success:function(res){
+                res.filePath = res.filePath.replace('./','/');
+                //回显当前修改的图片
+                $("#userImg").attr('src',res.filePath).show(); 
+                $("input[name=photo]").val(res.filePath);
+              }
+            })
+        })
+
+        //修改用户信息
+        $("#updUserInfo").on('click',function(){
+           let photo = $("input[name=photo]").val();
+            //获取修改后的新的文件路径
+            let oldPhoto = $("input[name=oldPhoto]").val();
+
+            //如果存在新的路径，则选用新的路径
+            let filePath = photo || oldPhoto;
+            //将路径为开头为./或/的转为./
+            filePath = filePath.replace('/^\.?\//','./');
+
+            $("input[name=photo]").val(filePath);
+            
+            //获取表单信息
+            let userInfo = $("#userFormInfo").serialize();
+            console.log(userInfo);
+
+            $.ajax({
+              url:'/updUserInfo',
+              type:'post',
+              data: userInfo,
+              dataType:'json',
+              success:function(res){
+                if(res.code == 200){
+                  layer.msg(res.message,{icon:1,time:1000},function(){
+                    location.href = '/users';
+                  })
+                }else {
+                  layer.msg(res.message,{icon:2,time:1000});
+                }
+              }
+            })
+        })
+    })
+</script>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Sign in &laquo; Admin</title>
+  <link rel="stylesheet" href="/public/vendors/bootstrap/css/bootstrap.css">
+  <link rel="stylesheet" href="/public/css/admin.css">
+  <link rel="stylesheet" href="/public/layui/css/modules/layer/default/layer.css">
+</head>
+<body>
+  <div class="login">
+    <form class="login-wrap" id = "loginForm">
+      <img class="avatar" src="/public/img/default.png">
+      <!-- 有错误信息时展示 -->
+      <!-- <div class="alert alert-danger">
+        <strong>错误！</strong> 用户名或密码错误！
+      </div> -->
+      <div class="form-group">
+        <label for="email" class="sr-only">邮箱</label>
+        <input id="email" type="email" class="form-control" name = "email" placeholder="邮箱" autofocus>
+      </div>
+      <div class="form-group">
+        <label for="password" class="sr-only">密码</label>
+        <input id="password" type="password" class="form-control" placeholder="密码" name = "password">
+      </div>
+      <!-- 阻止a链接的跳转 javascript:;-->
+      <a class="btn btn-primary btn-block" href="javascript:;" id = "login">登 录</a>
+    </form>
+  </div>
+</body>
+<script src="/public/js/jquery-3.5.1.js"></script>
+<script src="/public/layui/lay/modules/layer.js"></script>
+<script>
+  $(function(){ 
+    $("#login").on('click',function(){
+      //获取表单信息
+      // let loginData = $("#loginForm").serialize();
+      // console.log(loginData);
+      let email = $("input[name=email]").val();
+      let password = $("input[name=password]").val();
+
+      //利用正则验证邮箱是否符合
+      //safsdds@qq.com.cn
+      let reg = /^\w+\@(?:\w+\.)+[a-zA-Z]{2,5}$/g;
+      if(!reg.test(email)){
+        layer.msg('邮箱格式错误',{ icon:2});
+        return;
+      }
+
+      $.ajax({
+        url: '/getLoginData',
+        type: 'post',
+        data: {
+          "email":email,
+          "password":password
+        },
+        dataType: 'json',
+        //做成功后的逻辑处理
+        success: function(data){
+          if(data.code == 200){
+            layer.msg(data.message,{
+              icon: 1,
+              time:2000
+            },function(res){
+              //登录成功,跳转到用户主页
+              location.href = "/index";
+            })   
+          }else {
+            layer.msg(data.message,{icon:2});
+          }
+        }
+      })
+    })
+
+
+
+  })
+
+</script>
+</html>
